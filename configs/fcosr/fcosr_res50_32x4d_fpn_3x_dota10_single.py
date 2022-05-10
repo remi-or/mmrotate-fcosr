@@ -66,7 +66,7 @@ model = dict(
 optimizer = dict(type='SGD', lr=0.01/num_gpus, momentum=0.9, weight_decay=0.0001)
 checkpoint_config = dict(interval=1)
 log_config = dict(interval=50, hooks=[dict(type='TextLoggerHook')])
-custom_hooks = [dict(type='NumClassCheckHook'), dict(type='GradientCumulativeOptimizerHook', cumulative_iters=2)]
+custom_hooks = [dict(type='NumClassCheckHook')]#, dict(type='GradientCumulativeOptimizerHook', cumulative_iters=2)]
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = 'work_dirs/DOTA10/FCOSR-M/FCOSR_rx50_32x4d_fpn_3x_dota10_single'
