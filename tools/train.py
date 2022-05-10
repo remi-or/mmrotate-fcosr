@@ -79,8 +79,8 @@ def parse_args():
     return args
 
 
-def main():
-    args = parse_args()
+def main(args=None):
+    args = parse_args() if args is None else args
 
     cfg = Config.fromfile(args.config)
     if args.cfg_options is not None:
