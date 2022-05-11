@@ -644,7 +644,8 @@ class FCOSRHead(BaseDenseHead):
             cls_scores, rbox_preds = cls_scores[kept], rbox_preds[kept]
             positions, strides = positions[kept], strides[kept]
         # eventual rescaling
-        if rescale and (scale_factor := img_meta['scale_factor']) != 1:
+        scale_factor = img_meta['scale_factor']
+        if rescale and scale_factor != 1:
             rbox_preds[:, :4] /= scale_factor
         # apply NMS
         dets, labels, _ = multiclass_nms_rotated_extra(
