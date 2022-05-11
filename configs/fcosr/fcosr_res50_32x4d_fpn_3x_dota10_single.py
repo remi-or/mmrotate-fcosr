@@ -3,8 +3,9 @@ _base_ = [
     '../_base_/default_runtime.py'
 ]
 
-num_gpus = 1
+gpus = 1
 image_size = (1024, 1024)
+batch_acc = 4
 
 model = dict(
     type='FCOSR',
@@ -63,10 +64,22 @@ model = dict(
         extra_nms=0.85,
         rotations=[]))
 
-optimizer = dict(type='SGD', lr=0.01/num_gpus, momentum=0.9, weight_decay=0.0001)
+optimizer = dict(type='SGD', 
+                 lr=2.5e-3*gpus*batch_acc, 
+                 momentum=0.9, 
+                 weight_decay=0.0001)
+optimizer_config = dict(type='GradientCumulativeOptimizerHook', 
+                        cumulative_iters=batch_acc,
+                        grad_clip=dict(max_norm=35, norm_type=2))
+lr_config = dict(policy='step',
+                 warmup='linear',
+                 warmup_iters=10000,
+                 warmup_ratio=1.0 / 3,
+                 step=[24, 33])
+                        
 checkpoint_config = dict(interval=1)
 log_config = dict(interval=50, hooks=[dict(type='TextLoggerHook')])
-custom_hooks = [dict(type='NumClassCheckHook')]#, dict(type='GradientCumulativeOptimizerHook', cumulative_iters=2)]
+custom_hooks = [dict(type='NumClassCheckHook')]
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = 'work_dirs/DOTA10/FCOSR-M/FCOSR_rx50_32x4d_fpn_3x_dota10_single'
@@ -74,4 +87,4 @@ find_unused_parameters = True
 load_from = None
 resume_from = None
 workflow = [('train', 1)]
-gpu_ids = range(0, num_gpus)
+gpu_ids = range(0, gpus)
