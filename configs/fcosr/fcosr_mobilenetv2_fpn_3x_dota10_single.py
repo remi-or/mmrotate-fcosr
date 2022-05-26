@@ -4,7 +4,6 @@ _base_ = [
 ]
 
 data = dict(val=dict(type='DOTAFullValDataset'))
-
 image_size = (1024, 1024)
 batch_acc = 4
 
