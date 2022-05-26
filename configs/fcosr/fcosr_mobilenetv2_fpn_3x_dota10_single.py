@@ -1,7 +1,9 @@
 _base_ = [
-    '../_base_/datasets/dotav1_fcosr.py', '../_base_/schedules/schedule_3x.py',
+    '../_base_/datasets/dotav1.py', '../_base_/schedules/schedule_3x.py',
     '../_base_/default_runtime.py'
 ]
+
+data = dict(val=dict(type='DOTAFullValDataset'))
 
 image_size = (1024, 1024)
 batch_acc = 4
