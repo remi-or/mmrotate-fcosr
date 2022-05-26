@@ -61,6 +61,15 @@ def eval_matches(det_results, annotations, iou_thr=0.5) -> List[float]:
     return (accumulator / accumulator.sum()).tolist()
 
 
+def print_matches(matches: List[float]) -> None:
+    print('+--------------+---------------+------------+------------+')
+    print('| true_matches | false_matches | false_dets | missed_gts |')
+    print('+--------------+---------------+------------+------------+')
+    print(f"|{' '*8}{matches[0]:.3f} |{' '*9}{matches[1]:.3f}",
+          f"|{' '*6}{matches[2]:.3f} |{' '*6}{matches[3]:.3f} |")
+    print('+--------------+---------------+------------+------------+')
+
+
 @ROTATED_DATASETS.register_module()
 class DOTAFullValDataset(DOTADataset):
 
@@ -104,4 +113,5 @@ class DOTAFullValDataset(DOTADataset):
         eval_results['mAP'] = mean_ap
         # matches
         eval_results['matches'] = eval_matches(results, annotations, iou_thr)
+        print_matches(eval_results['matches'])
         return eval_results
