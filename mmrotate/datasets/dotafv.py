@@ -70,6 +70,33 @@ def print_matches(matches: List[float]) -> None:
     print('+--------------+---------------+------------+------------+')
 
 
+def eval_iou_single(dets, gts, iou_thr) -> Tuple[float, float, int]:
+    ca_iou, tm_iou = 0., 0.
+    ious: Tensor = box_iou_rotated(dets[:, :-1], gts[:, :-1])
+    for i_det, i_gt in enumerate(ious.argmax(1).tolist()):
+        if ious[i_det, i_gt] >= iou_thr:
+            ca_iou += ious[i_det, i_gt].item()
+            if dets[i_det, -1] == gts[i_gt, -1]:
+                tm_iou += ious[i_det, i_gt].item()
+    return ca_iou, tm_iou, dets.size(0)
+
+
+def eval_ious(det_results, annotations, iou_thr=0.5) -> Tuple[float, float]:
+    accumulator = torch.zeros((3, ))  # class_agnostic iou, true_match iou
+    for dets, gts in zip(format_dets(det_results), format_gts(annotations)):
+        accumulator += torch.tensor(eval_iou_single(dets, gts, iou_thr))
+    ca_iou, tm_iou, dets = accumulator.tolist()
+    return ca_iou / dets, tm_iou / dets
+
+
+def print_ious(ious: Tuple[float, float]) -> None:
+    print('+--------------------+----------------+')
+    print('| class_agnostic_IoU | true_match_IoU |')
+    print('+--------------------+----------------+')
+    print(f"|{' '*14}{ious[0]:.3f} |{' '*10}{ious[1]:.3f} |")
+    print('+--------------------+----------------+')
+
+
 @ROTATED_DATASETS.register_module()
 class DOTAFullValDataset(DOTADataset):
 
@@ -78,7 +105,8 @@ class DOTAFullValDataset(DOTADataset):
                  logger=None,
                  iou_thr=0.5,
                  scale_ranges=None,
-                 nproc=4):
+                 nproc=4,
+                 **kwargs):
         """Evaluate the dataset.
 
         Args:
@@ -112,6 +140,17 @@ class DOTAFullValDataset(DOTADataset):
             nproc=nproc)
         eval_results['mAP'] = mean_ap
         # matches
-        eval_results['matches'] = eval_matches(results, annotations, iou_thr)
-        print_matches(eval_results['matches'])
+        matches = eval_matches(results, annotations, iou_thr)
+        eval_results['true_matches'] = matches[0]
+        eval_results['false_matches'] = matches[1]
+        eval_results['false_dets'] = matches[2]
+        eval_results['missed_dets'] = matches[3]
+        print()
+        print_matches(matches)
+        # iou
+        ious = eval_ious(results, annotations, iou_thr)
+        eval_results['class_agnostic_IoU'] = ious[0]
+        eval_results['true_match_IoU'] = ious[1]
+        print()
+        print_ious(ious)
         return eval_results
